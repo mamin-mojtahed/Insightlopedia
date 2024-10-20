@@ -1,0 +1,68 @@
+/* App.css */
+
+body {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background-color: #f0f0f0;
+}
+
+.quote {
+  font-family: 'Georgia', serif;
+  font-size: 1.2em;
+  color: #333;
+  padding: 20px;
+  margin: 20px;
+}
+
+.quote p {
+  margin: 0;
+  line-height: 1.6;
+}
+
+.quote .author {
+  text-align: right;
+  font-style: italic;
+  margin-top: 10px;
+  color: #555;
+}
+
+.quote p:nth-child(2) {
+  text-align: right;
+  color: grey;
+  font-style: italic;
+}
+
+.quoteholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  margin: 20px;
+  background-color: #f9f9f9;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  max-width: 600px;
+  position: relative;
+}
+
+.quoteholder .quote {
+  width: 100%;
+}
+
+.quoteholder .figure-name {
+  font-weight: bold;
+  margin-bottom: 10px;
+  color: #222;
+  position: absolute;
+  top: 0;
+  left: 20px;
+  font-family: 'Lobster', cursive; /* Stylish and readable font */
+  font-size: 1.5em;
+}
