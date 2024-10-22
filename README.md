@@ -1,2 +1,2 @@
 # Insightlopedia
-Insight Encyclopedia Project - Hack49
+The Comprehensive Insight Encyclopedia Project

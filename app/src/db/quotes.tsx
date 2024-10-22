@@ -16,4 +16,4 @@ const Quote: React.FC<QuoteProps> = ({ id, figure_id, text, tags }) => {
     );
 };
 
-export { Quote };
+export { Quote, type QuoteProps };
