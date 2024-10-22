@@ -92,3 +92,33 @@ body {
   font-family: 'Lobster', cursive; /* Stylish and readable font */
   font-size: 1.5em;
 }
+
+button {
+  border-radius: 4px;
+}
+
+
+.tags {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.quoteholder button {
+  background: none;
+  border: none;
+  transition: background-color 0.2s ease, color 0.2s ease, transform 0.2s ease;
+}
+
+button.selected {
+  background-color: #333;
+  color: #fff;
+  transition: background-color 0.2s ease, color 0.2s ease, transform 0.2s ease;
+}
+
+button:hover:not(.selected) {
+  cursor: pointer;
+  background-color: #777;
+  color: #fff;
+  transform: scale(1.05);
+  transition: background-color 0.2s ease, color 0.2s ease, transform 0.2s ease;
+}
