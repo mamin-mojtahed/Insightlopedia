@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import logo from './logo.svg';
 import './db/figures';
 import './db/quotes';
@@ -27,10 +27,34 @@ const quotes = [
   { id: 11, figure_id: 0, text: 'If you want to be successful, don’t seek success – seek competence, empowerment; do nothing short of the best that you can do.', tags: ['success', 'competence'] }
 ];
 
+const tags = Array.from(new Set(quotes.flatMap(quote => quote.tags)));
+
 function App() {
+  const [selectedTag, setSelectedTag] = useState<string | null>(null);
+  const filteredQuotes = selectedTag
+    ? quotes.filter(quote => quote.tags.includes(selectedTag))
+    : quotes;
+
   return (
     <div className="App">
-      {quotes.map(quote => {
+      <div className="tag-bar">
+        <button
+          className={`tag-button ${selectedTag === null ? 'selected' : ''}`}
+          onClick={() => setSelectedTag(null)}
+        >
+          ALL
+        </button>
+        {tags.map(tag => (
+          <button
+            key={tag}
+            className={`tag-button ${selectedTag === tag ? 'selected' : ''}`}
+            onClick={() => setSelectedTag(tag)}
+          >
+            {tag}
+          </button>
+        ))}
+      </div>
+      {filteredQuotes.map(quote => {
         const figure = figures.find(f => f.id === quote.figure_id);
         const fullName = figure ? `${figure.firstName} ${figure.lastName}` : '';
         return (
