@@ -11,7 +11,21 @@ const Quote: React.FC<QuoteProps> = ({ id, figure_id, text, tags }) => {
     return (
         <div className="quote">
             <p><strong>{text}</strong></p>
-            <p>{tags.join(', ')}</p>
+            <div className="tags">
+                {tags.map(tag => (
+                    <button
+                        key={tag}
+                        className="tag-button"
+                        style={{ fontFamily: 'inherit', fontSize: 'inherit' }}
+                        onClick={() => {
+                            const event = new CustomEvent('tagSelected', { detail: tag });
+                            window.dispatchEvent(event);
+                        }}
+                    >
+                        {tag}
+                    </button>
+                ))}
+            </div>
         </div>
     );
 };

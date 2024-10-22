@@ -31,16 +31,34 @@ const tags = Array.from(new Set(quotes.flatMap(quote => quote.tags)));
 
 function App() {
   const [selectedTag, setSelectedTag] = useState<string | null>(null);
-  const filteredQuotes = selectedTag
-    ? quotes.filter(quote => quote.tags.includes(selectedTag))
-    : quotes;
+  const [filteredQuotes, setFilteredQuotes] = useState(quotes);
+  React.useEffect(() => {
+    const handleTagSelected = (event: CustomEvent) => {
+      const selectedTag = event.detail;
+      setSelectedTag(selectedTag);
+      const newFilteredQuotes = selectedTag
+        ? quotes.filter(quote => quote.tags.includes(selectedTag))
+        : quotes;
+      setFilteredQuotes(newFilteredQuotes);
+    };
+
+    window.addEventListener('tagSelected', handleTagSelected as EventListener);
+
+    return () => {
+      window.removeEventListener('tagSelected', handleTagSelected as EventListener);
+    };
+  }, []);
+
 
   return (
     <div className="App">
       <div className="tag-bar">
         <button
           className={`tag-button ${selectedTag === null ? 'selected' : ''}`}
-          onClick={() => setSelectedTag(null)}
+          onClick={() => {
+            setSelectedTag(null);
+            setFilteredQuotes(quotes);
+          }}
         >
           ALL
         </button>
@@ -48,7 +66,10 @@ function App() {
           <button
             key={tag}
             className={`tag-button ${selectedTag === tag ? 'selected' : ''}`}
-            onClick={() => setSelectedTag(tag)}
+            onClick={() => {
+              setSelectedTag(tag);
+              setFilteredQuotes(quotes.filter(quote => quote.tags.includes(tag)));
+            }}
           >
             {tag}
           </button>
