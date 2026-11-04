@@ -1,18 +1,15 @@
 import React from 'react';
+import { Figure as FigureType } from '../types';
 
-interface FigureProps {
-    id: number;
-    firstName: string;
-    lastName: string;
-}
+export type FigureProps = FigureType;
 
-const Figure: React.FC<FigureProps> = ({ id, firstName, lastName }) => {
-    return (
-        <div>
-            <p>First Name: {firstName}</p>
-            <p>Last Name: {lastName}</p>
-        </div>
-    );
+export const Figure: React.FC<FigureProps> = ({ firstName, lastName }) => {
+  return (
+    <div>
+      <p>First Name: {firstName}</p>
+      <p>Last Name: {lastName}</p>
+    </div>
+  );
 };
 
-export { Figure, type FigureProps };
+export default Figure;

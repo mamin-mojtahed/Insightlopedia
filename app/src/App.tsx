@@ -1,90 +1,78 @@
-import React, { useState } from 'react';
-import logo from './logo.svg';
-import './db/figures';
-import './db/quotes';
+import React, { useEffect, useState, useMemo } from 'react';
 import './App.css';
-import { Quote } from './db/quotes';
-
-import { Figure, FigureProps } from './db/figures';
-
-const figures: FigureProps[] = [
-  { id: 0, firstName: 'Sadhguru', lastName: '' },
-  { id: 1, firstName: 'Jordan', lastName: 'Peterson' }
-];
-
-const quotes = [
-  { id: 0, figure_id: 0, text: 'A friend is someone brave enough to tell you you\'re shit while still wanting to be with you.', tags: ['friendship', 'criticism'] },
-  { id: 1, figure_id: 1, text: 'A friend is someone who\'s willing to suffer with you and cheer with you all the way.', tags: ['friendship', 'sympathy'] },
-  { id: 2, figure_id: 0, text: 'The sign of intelligence is that you are constantly wondering. Idiots are always dead sure about every damn thing they are doing in their life.', tags: ['intelligence', 'wisdom'] },
-  { id: 3, figure_id: 0, text: 'If you resist change, you resist life.', tags: ['change', 'life'] },
-  { id: 4, figure_id: 0, text: 'The fear is simply because you are not living with life, you are living in your mind.', tags: ['fear', 'mind'] },
-  { id: 5, figure_id: 0, text: 'The most beautiful moments in life are moments when you are expressing your joy, not when you are seeking it.', tags: ['joy', 'life'] },
-  { id: 6, figure_id: 1, text: 'Compare yourself to who you were yesterday, not to who someone else is today.', tags: ['comparison', 'self-improvement'] },
-  { id: 7, figure_id: 1, text: 'You’re going to pay a price for every bloody thing you do and everything you don’t do.', tags: ['choices', 'consequences'] },
-  { id: 8, figure_id: 1, text: 'Work as hard as you possibly can on at least one thing and see what happens.', tags: ['hard work', 'success'] },
-  { id: 9, figure_id: 1, text: 'If you fulfill your obligations every day you don’t need to worry about the future.', tags: ['responsibility', 'future'] },
-  { id: 10, figure_id: 0, text: 'Do not try to fix whatever comes in your life. Fix yourself in such a way that whatever comes, you will be fine.', tags: ['self-improvement', 'life'] },
-  { id: 11, figure_id: 0, text: 'If you want to be successful, don’t seek success – seek competence, empowerment; do nothing short of the best that you can do.', tags: ['success', 'competence'] }
-];
-
-const tags = Array.from(new Set(quotes.flatMap(quote => quote.tags)));
+import { Quote, Figure } from './types';
+import { fetchQuotes, fetchFigures } from './services/api';
+import { TagBar } from './components/TagBar';
+import { QuoteCard } from './components/QuoteCard';
 
 function App() {
+  const [quotes, setQuotes] = useState<Quote[]>([]);
+  const [figures, setFigures] = useState<Figure[]>([]);
   const [selectedTag, setSelectedTag] = useState<string | null>(null);
-  const [filteredQuotes, setFilteredQuotes] = useState(quotes);
-  React.useEffect(() => {
-    const handleTagSelected = (event: CustomEvent) => {
-      const selectedTag = event.detail;
-      setSelectedTag(selectedTag);
-      const newFilteredQuotes = selectedTag
-        ? quotes.filter(quote => quote.tags.includes(selectedTag))
-        : quotes;
-      setFilteredQuotes(newFilteredQuotes);
-    };
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
 
-    window.addEventListener('tagSelected', handleTagSelected as EventListener);
+  useEffect(() => {
+    let isMounted = true;
+    setIsLoading(true);
+
+    Promise.all([fetchQuotes(), fetchFigures()])
+      .then(([quotesData, figuresData]) => {
+        if (!isMounted) return;
+        setQuotes(quotesData);
+        setFigures(figuresData);
+        setIsLoading(false);
+      })
+      .catch(err => {
+        if (!isMounted) return;
+        console.error('Initialization error:', err);
+        setError(err.message || 'Failed to load data');
+        setIsLoading(false);
+      });
 
     return () => {
-      window.removeEventListener('tagSelected', handleTagSelected as EventListener);
+      isMounted = false;
     };
   }, []);
 
+  const tags = useMemo(() => {
+    return Array.from(new Set(quotes.flatMap(q => q.tags))).sort();
+  }, [quotes]);
+
+  const filteredQuotes = useMemo(() => {
+    if (!selectedTag) return quotes;
+    return quotes.filter(quote => quote.tags.includes(selectedTag));
+  }, [quotes, selectedTag]);
+
+  const figureMap = useMemo(() => {
+    const map = new Map<number, Figure>();
+    figures.forEach(figure => map.set(figure.id, figure));
+    return map;
+  }, [figures]);
 
   return (
     <div className="App">
-      <div className="tag-bar">
-        <button
-          className={`tag-button ${selectedTag === null ? 'selected' : ''}`}
-          onClick={() => {
-            setSelectedTag(null);
-            setFilteredQuotes(quotes);
-          }}
-        >
-          ALL
-        </button>
-        {tags.map(tag => (
-          <button
-            key={tag}
-            className={`tag-button ${selectedTag === tag ? 'selected' : ''}`}
-            onClick={() => {
-              setSelectedTag(tag);
-              setFilteredQuotes(quotes.filter(quote => quote.tags.includes(tag)));
-            }}
-          >
-            {tag}
-          </button>
-        ))}
-      </div>
-      {filteredQuotes.map(quote => {
-        const figure = figures.find(f => f.id === quote.figure_id);
-        const fullName = figure ? `${figure.firstName} ${figure.lastName}` : '';
-        return (
-          <div className="quoteholder" key={quote.id}>
-            <h3 className="figure-name">{fullName}</h3>
-            <Quote {...quote} />
-          </div>
-        );
-      })}
+      <TagBar
+        tags={tags}
+        selectedTag={selectedTag}
+        onSelectTag={(tag) => setSelectedTag(tag)}
+      />
+
+      {error && <div className="error-message" style={{ color: 'red', margin: '20px' }}>{error}</div>}
+
+      {isLoading ? (
+        <p style={{ margin: '40px', fontSize: '1.2em' }}>Loading insights...</p>
+      ) : (
+        filteredQuotes.map(quote => (
+          <QuoteCard
+            key={quote.id}
+            quote={quote}
+            figure={figureMap.get(quote.figure_id)}
+            selectedTag={selectedTag}
+            onSelectTag={(tag) => setSelectedTag(tag)}
+          />
+        ))
+      )}
     </div>
   );
 }

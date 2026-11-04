@@ -1,0 +1,18 @@
+{
+  "name": "insightlopedia",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Insightlopedia - The Comprehensive Insight Encyclopedia Project",
+  "workspaces": [
+    "backend",
+    "app"
+  ],
+  "scripts": {
+    "start": "concurrently -n \"API,APP\" -c \"blue,magenta\" \"npm start --workspace=backend\" \"npm start --workspace=app\"",
+    "dev": "concurrently -n \"API,APP\" -c \"blue,magenta\" \"npm run dev --workspace=backend\" \"npm run dev --workspace=app\""
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}
+

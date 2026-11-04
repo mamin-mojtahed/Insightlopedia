@@ -1,33 +1,29 @@
 import React from 'react';
+import { Quote as QuoteType } from '../types';
 
-interface QuoteProps {
-    id: number;
-    figure_id: number;
-    text: string;
-    tags: string[];
-}
-
-const Quote: React.FC<QuoteProps> = ({ id, figure_id, text, tags }) => {
-    return (
-        <div className="quote">
-            <p><strong>{text}</strong></p>
-            <div className="tags">
-                {tags.map(tag => (
-                    <button
-                        key={tag}
-                        className="tag-button"
-                        style={{ fontFamily: 'inherit', fontSize: 'inherit' }}
-                        onClick={() => {
-                            const event = new CustomEvent('tagSelected', { detail: tag });
-                            window.dispatchEvent(event);
-                        }}
-                    >
-                        {tag}
-                    </button>
-                ))}
-            </div>
-        </div>
-    );
+export type QuoteProps = QuoteType & {
+  onSelectTag?: (tag: string) => void;
 };
 
-export { Quote, type QuoteProps };
+export const Quote: React.FC<QuoteProps> = ({ text, tags, onSelectTag }) => {
+  return (
+    <div className="quote">
+      <p><strong>{text}</strong></p>
+      <div className="tags">
+        {tags.map(tag => (
+          <button
+            key={tag}
+            type="button"
+            className="tag-button"
+            style={{ fontFamily: 'inherit', fontSize: 'inherit' }}
+            onClick={() => onSelectTag?.(tag)}
+          >
+            {tag}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+export default Quote;
