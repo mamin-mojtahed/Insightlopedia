@@ -19,49 +19,106 @@ body {
   justify-content: center;
 }
 
-.tag-bar {
+/* Sticky Header with Search and Topic Tags */
+.top-nav {
   position: sticky;
   top: 0;
-  z-index: 1;
+  z-index: 10;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 12px 10px 6px;
+  gap: 8px;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  background-color: rgba(240, 240, 240, 0.9);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+/* Search Bar (Filtering) on top of topics */
+.search-bar-wrapper {
+  position: relative;
+  width: 95%;
+  max-width: 600px;
+  display: flex;
+  align-items: center;
+}
+
+.search-icon {
+  position: absolute;
+  left: 12px;
+  pointer-events: none;
+  color: #777;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  user-select: none;
+}
+
+.search-input {
+  width: 100%;
+  font-family: 'Georgia', serif;
+  font-size: 1.05em;
+  color: #222;
+  background-color: #ffffff;
+  border: 1px solid #c4c4c4;
+  border-radius: 6px;
+  padding: 9px 38px 9px 38px;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.06);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: #333333;
+  box-shadow: 0 0 0 2px rgba(50, 50, 50, 0.15);
+}
+
+.search-input::placeholder {
+  color: #777;
+  font-style: italic;
+  font-family: 'Georgia', serif;
+  font-size: 0.95em;
+}
+
+.search-clear-btn {
+  position: absolute;
+  right: 10px;
+  background: none;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #777;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 50%;
+  line-height: 1;
+  transition: color 0.15s ease, background-color 0.15s ease;
+}
+
+.search-clear-btn:hover {
+  color: #111;
+  background-color: #e2e2e2;
+}
+
+/* Topic Tag Bar */
+.tag-bar {
   display: flex;
   flex-wrap: wrap;
-  padding: 10px;
-  gap: 10px;
-  backdrop-filter: blur(10px);
-  /* background-color: rgba(255, 255, 255, 0.8); */
-  * {
-    font-family: 'Georgia', serif;
-    font-size: 1.2em;
-    color: #333;
-  }
+  justify-content: center;
+  padding: 4px 6px;
+  gap: 8px;
 }
 
-.quote {
+.tag-bar button {
   font-family: 'Georgia', serif;
-  font-size: 1.2em;
+  font-size: 1.1em;
   color: #333;
-  padding: 20px;
-  margin: 20px;
 }
 
-.quote p {
-  margin: 0;
-  line-height: 1.6;
-}
-
-.quote .author {
-  text-align: right;
-  font-style: italic;
-  margin-top: 10px;
-  color: #555;
-}
-
-.quote p:nth-child(2) {
-  text-align: right;
-  color: grey;
-  font-style: italic;
-}
-
+/* Quote Cards */
 .quoteholder {
   display: flex;
   flex-direction: column;
@@ -89,14 +146,98 @@ body {
   position: absolute;
   top: 0;
   left: 20px;
-  font-family: 'Lobster', cursive; /* Stylish and readable font */
+  font-family: 'Lobster', cursive;
   font-size: 1.5em;
+  user-select: none;
+}
+
+.quoteholder .figure-name.tappable-figure {
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 4px;
+  transition: color 0.15s ease, background-color 0.15s ease, transform 0.15s ease;
+}
+
+@media (hover: hover) {
+  .quoteholder .figure-name.tappable-figure:hover {
+    color: #000;
+    background-color: rgba(0, 0, 0, 0.06);
+    transform: scale(1.02);
+  }
+}
+
+.quoteholder .figure-name.tappable-figure:active {
+  background-color: rgba(0, 0, 0, 0.12);
+}
+
+.quoteholder .figure-name.tappable-figure:focus-visible {
+  outline: 2px solid #333;
+  outline-offset: 2px;
+}
+
+.quoteholder .figure-name.tappable-figure.active {
+  background-color: #333333;
+  color: #ffffff;
+}
+
+.quote {
+  font-family: 'Georgia', serif;
+  font-size: 1.2em;
+  color: #333;
+  padding: 20px;
+  margin: 20px;
+}
+
+.quote p {
+  margin: 0;
+  line-height: 1.6;
+}
+
+.quote .author {
+  text-align: right;
+  font-style: italic;
+  margin-top: 10px;
+  color: #555;
+}
+
+/* Interactive Tappable Words */
+.tappable-word {
+  cursor: pointer;
+  display: inline;
+  border-radius: 3px;
+  padding: 1px 2px;
+  margin: 0 -1px;
+  transition: background-color 0.15s ease, color 0.15s ease, text-decoration 0.15s ease;
+  user-select: text;
+}
+
+@media (hover: hover) {
+  .tappable-word:hover {
+    background-color: rgba(0, 0, 0, 0.07);
+    text-decoration: underline;
+    text-decoration-color: rgba(50, 50, 50, 0.4);
+    text-underline-offset: 3px;
+  }
+}
+
+.tappable-word:active {
+  background-color: rgba(0, 0, 0, 0.15);
+}
+
+.tappable-word:focus-visible {
+  outline: 2px solid #333;
+  outline-offset: 1px;
+}
+
+.tappable-word.active {
+  background-color: #333333;
+  color: #ffffff;
+  text-decoration: none;
 }
 
 button {
   border-radius: 4px;
 }
-
 
 .tags {
   display: flex;
@@ -121,4 +262,33 @@ button:hover:not(.selected) {
   color: #fff;
   transform: scale(1.05);
   transition: background-color 0.2s ease, color 0.2s ease, transform 0.2s ease;
+}
+
+/* Empty State / No Results */
+.no-results {
+  text-align: center;
+  margin: 40px 20px;
+  font-family: 'Georgia', serif;
+  color: #555;
+}
+
+.no-results p {
+  font-size: 1.2em;
+  margin-bottom: 12px;
+}
+
+.reset-button {
+  font-family: 'Georgia', serif;
+  font-size: 1.05em;
+  padding: 6px 14px;
+  background-color: #333;
+  color: #fff;
+  border: none;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: background-color 0.2s ease;
+}
+
+.reset-button:hover {
+  background-color: #555;
 }

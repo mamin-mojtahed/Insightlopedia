@@ -7,3 +7,9 @@ test('renders ALL tag button', () => {
   const allButton = screen.getByText(/ALL/i);
   expect(allButton).toBeInTheDocument();
 });
+
+test('renders search input bar', () => {
+  render(<App />);
+  const searchInput = screen.getByPlaceholderText(/search quotes, figures, or topics/i);
+  expect(searchInput).toBeInTheDocument();
+});
