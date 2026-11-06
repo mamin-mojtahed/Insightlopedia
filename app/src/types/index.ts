@@ -10,4 +10,3 @@ export interface Quote {
   text: string;
   tags: string[];
 }
-

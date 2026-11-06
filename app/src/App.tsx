@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useMemo, useCallback } from 'react';
 import './App.css';
-import { Quote, Figure } from './types';
+import type { Quote, Figure } from './types';
 import { fetchQuotes, fetchFigures } from './services/api';
 import { SearchBar } from './components/SearchBar';
 import { TagBar } from './components/TagBar';
@@ -9,7 +9,6 @@ import { QuoteCard } from './components/QuoteCard';
 function App() {
   const [quotes, setQuotes] = useState<Quote[]>([]);
   const [figures, setFigures] = useState<Figure[]>([]);
-  const [selectedTag, setSelectedTag] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
@@ -47,48 +46,60 @@ function App() {
     return Array.from(new Set(quotes.flatMap(q => q.tags))).sort();
   }, [quotes]);
 
+  // Active topic derived directly from the search query
+  const activeTag = useMemo(() => {
+    const query = searchQuery.trim().toLowerCase();
+    if (!query) return null;
+    return tags.find(t => t.toLowerCase() === query) || null;
+  }, [searchQuery, tags]);
+
+  // Single unified filter driven entirely by searchQuery (no filtering within filtered)
   const filteredQuotes = useMemo(() => {
     const query = searchQuery.trim().toLowerCase();
+    if (!query) return quotes;
 
     return quotes.filter(quote => {
-      // 1. Topic tag filter
-      if (selectedTag && !quote.tags.includes(selectedTag)) {
-        return false;
-      }
+      const figure = figureMap.get(quote.figure_id);
+      const fullName = figure ? `${figure.firstName} ${figure.lastName}`.toLowerCase() : '';
+      const textMatch = quote.text.toLowerCase().includes(query);
+      const figureMatch = fullName.includes(query);
+      const tagMatch = quote.tags.some(tag => tag.toLowerCase().includes(query));
 
-      // 2. Search query filter
-      if (query) {
-        const figure = figureMap.get(quote.figure_id);
-        const fullName = figure ? `${figure.firstName} ${figure.lastName}`.toLowerCase() : '';
-        const textMatch = quote.text.toLowerCase().includes(query);
-        const figureMatch = fullName.includes(query);
-        const tagMatch = quote.tags.some(tag => tag.toLowerCase().includes(query));
-
-        return textMatch || figureMatch || tagMatch;
-      }
-
-      return true;
+      return textMatch || figureMatch || tagMatch;
     });
-  }, [quotes, selectedTag, searchQuery, figureMap]);
+  }, [quotes, searchQuery, figureMap]);
 
-  const handleSelectWord = useCallback((word: string) => {
-    const clean = word.trim().toLowerCase();
-    // Toggle: if already filtering by this exact word, clear it; otherwise filter by it
-    if (searchQuery.trim().toLowerCase() === clean) {
+  // Tapping topics populates or clears the search bar
+  const handleSelectTag = useCallback((tag: string | null) => {
+    if (!tag) {
       setSearchQuery('');
     } else {
-      setSearchQuery(clean);
-      setSelectedTag(null); // Clear tag filter to search globally for the tapped word
+      const cleanTag = tag.trim();
+      if (searchQuery.trim().toLowerCase() === cleanTag.toLowerCase()) {
+        setSearchQuery('');
+      } else {
+        setSearchQuery(cleanTag);
+      }
     }
   }, [searchQuery]);
 
-  const handleSelectFigure = useCallback((figureName: string) => {
-    const clean = figureName.trim().toLowerCase();
-    if (searchQuery.trim().toLowerCase() === clean) {
+  // Tapping words in quotes populates or clears the search bar
+  const handleSelectWord = useCallback((word: string) => {
+    const cleanWord = word.trim();
+    if (searchQuery.trim().toLowerCase() === cleanWord.toLowerCase()) {
       setSearchQuery('');
     } else {
-      setSearchQuery(figureName.trim());
-      setSelectedTag(null);
+      setSearchQuery(cleanWord);
+    }
+  }, [searchQuery]);
+
+  // Tapping figure names populates or clears the search bar
+  const handleSelectFigure = useCallback((figureName: string) => {
+    const cleanName = figureName.trim();
+    if (searchQuery.trim().toLowerCase() === cleanName.toLowerCase()) {
+      setSearchQuery('');
+    } else {
+      setSearchQuery(cleanName);
     }
   }, [searchQuery]);
 
@@ -102,8 +113,8 @@ function App() {
         />
         <TagBar
           tags={tags}
-          selectedTag={selectedTag}
-          onSelectTag={(tag) => setSelectedTag(tag)}
+          selectedTag={activeTag}
+          onSelectTag={handleSelectTag}
         />
       </header>
 
@@ -123,8 +134,8 @@ function App() {
             key={quote.id}
             quote={quote}
             figure={figureMap.get(quote.figure_id)}
-            selectedTag={selectedTag}
-            onSelectTag={(tag) => setSelectedTag(tag)}
+            selectedTag={activeTag}
+            onSelectTag={handleSelectTag}
             activeWord={searchQuery}
             onSelectWord={handleSelectWord}
             onSelectFigure={handleSelectFigure}
@@ -133,17 +144,12 @@ function App() {
       ) : (
         <div className="no-results">
           <p>
-            No quotes found
-            {searchQuery ? ` matching "${searchQuery}"` : ''}
-            {selectedTag ? ` in topic "${selectedTag}"` : ''}.
+            No quotes found{searchQuery ? ` matching "${searchQuery}"` : ''}.
           </p>
           <button
             type="button"
             className="reset-button"
-            onClick={() => {
-              setSearchQuery('');
-              setSelectedTag(null);
-            }}
+            onClick={() => setSearchQuery('')}
           >
             Reset Filters
           </button>
