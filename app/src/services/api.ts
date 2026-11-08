@@ -27,21 +27,24 @@ function getApiCandidates(endpoint: string): string[] {
   return candidates;
 }
 
-async function requestJson(endpoint: string): Promise<any> {
+async function requestJson(endpoint: string, options?: RequestInit): Promise<any> {
   const candidates = getApiCandidates(endpoint);
   let lastError: Error | null = null;
 
   for (const url of candidates) {
     try {
       const response = await fetch(url, {
+        ...options,
         headers: {
-          Accept: 'application/json'
+          Accept: 'application/json',
+          ...(options && options.headers ? options.headers : {})
         }
       });
       if (response.ok) {
         return await response.json();
       }
-      lastError = new Error(`Request failed with status ${response.status}: ${response.statusText}`);
+      const errBody = await response.json().catch(() => ({}));
+      lastError = new Error(errBody.error || `Request failed with status ${response.status}: ${response.statusText}`);
     } catch (err: any) {
       lastError = err;
     }
@@ -64,4 +67,41 @@ export async function fetchQuotes(tag?: string | null): Promise<Quote[]> {
 export async function fetchFigures(): Promise<Figure[]> {
   const data = await requestJson('/figures');
   return data.figures || [];
+}
+
+export interface CreateQuotePayload {
+  text: string;
+  author: string;
+  tags?: string[] | string;
+}
+
+export interface CreateQuoteResponse {
+  quote: Quote;
+  figure: Figure;
+}
+
+export async function createQuote(payload: CreateQuotePayload): Promise<CreateQuoteResponse> {
+  const data = await requestJson('/quotes', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(payload)
+  });
+
+  return {
+    quote: {
+      ...data.quote,
+      tags: typeof data.quote.tags === 'string'
+        ? data.quote.tags.split(',').map((t: string) => t.trim()).filter(Boolean)
+        : (Array.isArray(data.quote.tags) ? data.quote.tags : [])
+    },
+    figure: data.figure
+  };
+}
+
+export async function deleteQuote(id: number): Promise<{ message: string; id: number }> {
+  return await requestJson(`/quotes/${id}`, {
+    method: 'DELETE'
+  });
 }

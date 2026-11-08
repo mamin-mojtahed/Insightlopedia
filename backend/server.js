@@ -2,6 +2,8 @@ const express = require('express');
 const sqlite3 = require('sqlite3').verbose();
 const cors = require('cors');
 const path = require('path');
+const { addQuote } = require('./addQuote');
+const { deleteQuote } = require('./deleteQuote');
 
 const app = express();
 const port = process.env.PORT || 3001;
@@ -103,6 +105,34 @@ app.get('/quotes', (req, res) => {
       return;
     }
     res.json({ quotes: rows });
+  });
+});
+
+// Endpoint: add quote
+app.post('/quotes', (req, res) => {
+  const { text, author, tags } = req.body;
+  addQuote(db, { text, author, tags }, (err, result) => {
+    if (err) {
+      res.status(400).json({ error: err.message });
+      return;
+    }
+    res.status(201).json(result);
+  });
+});
+
+// Endpoint: delete quote
+app.delete('/quotes/:id', (req, res) => {
+  const { id } = req.params;
+  deleteQuote(db, id, (err, result) => {
+    if (err) {
+      res.status(500).json({ error: err.message });
+      return;
+    }
+    if (!result.deleted) {
+      res.status(404).json({ error: 'Quote not found' });
+      return;
+    }
+    res.json({ message: 'Quote deleted successfully', id: result.id, quote: result.quote });
   });
 });
 

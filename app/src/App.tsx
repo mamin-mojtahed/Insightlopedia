@@ -1,10 +1,11 @@
 import React, { useEffect, useState, useMemo, useCallback } from 'react';
 import './App.css';
 import type { Quote, Figure } from './types';
-import { fetchQuotes, fetchFigures } from './services/api';
+import { fetchQuotes, fetchFigures, createQuote, deleteQuote } from './services/api';
 import { SearchBar } from './components/SearchBar';
 import { TagBar } from './components/TagBar';
 import { QuoteCard } from './components/QuoteCard';
+import { AddQuoteModal } from './components/AddQuoteModal';
 
 function App() {
   const [quotes, setQuotes] = useState<Quote[]>([]);
@@ -12,6 +13,7 @@ function App() {
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const [isAddModalOpen, setIsAddModalOpen] = useState<boolean>(false);
 
   useEffect(() => {
     let isMounted = true;
@@ -103,6 +105,31 @@ function App() {
     }
   }, [searchQuery]);
 
+  // Handle adding a new quote
+  const handleAddQuote = useCallback(async ({ text, author, tags }: { text: string; author: string; tags: string }) => {
+    const result = await createQuote({ text, author, tags });
+
+    // Prepend the new quote so it appears immediately at the top
+    setQuotes(prev => [result.quote, ...prev]);
+
+    // Update figures if a new figure was added
+    setFigures(prev => {
+      if (prev.some(f => f.id === result.figure.id)) {
+        return prev;
+      }
+      return [...prev, result.figure];
+    });
+
+    // Reset search query so the new quote is in full view
+    setSearchQuery('');
+  }, []);
+
+  // Handle deleting a quote
+  const handleDeleteQuote = useCallback(async (id: number) => {
+    await deleteQuote(id);
+    setQuotes(prev => prev.filter(quote => quote.id !== id));
+  }, []);
+
   return (
     <div className="App">
       <header className="top-nav">
@@ -110,6 +137,7 @@ function App() {
           value={searchQuery}
           onChange={setSearchQuery}
           placeholder="Search quotes, figures, or topics..."
+          onAddQuote={() => setIsAddModalOpen(true)}
         />
         <TagBar
           tags={tags}
@@ -139,6 +167,7 @@ function App() {
             activeWord={searchQuery}
             onSelectWord={handleSelectWord}
             onSelectFigure={handleSelectFigure}
+            onDeleteQuote={handleDeleteQuote}
           />
         ))
       ) : (
@@ -155,6 +184,13 @@ function App() {
           </button>
         </div>
       )}
+
+      <AddQuoteModal
+        isOpen={isAddModalOpen}
+        onClose={() => setIsAddModalOpen(false)}
+        onAdd={handleAddQuote}
+        figures={figures}
+      />
     </div>
   );
 }

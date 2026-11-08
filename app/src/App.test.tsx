@@ -1,5 +1,5 @@
-import React from 'react';
-import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
+import React, { act } from 'react';
+import { render, screen, fireEvent, waitFor, within } from '@testing-library/react';
 import App from './App';
 import * as api from './services/api';
 
@@ -25,22 +25,40 @@ const mockFigures = [
   { id: 2, firstName: 'Jordan', lastName: 'Peterson' }
 ];
 
-describe('App unified filtering', () => {
+describe('App unified filtering and quote addition', () => {
   beforeEach(() => {
     (api.fetchQuotes as jest.Mock).mockResolvedValue(mockQuotes);
     (api.fetchFigures as jest.Mock).mockResolvedValue(mockFigures);
+    (api.createQuote as jest.Mock).mockResolvedValue({
+      quote: {
+        id: 3,
+        figure_id: 3,
+        text: 'Know thyself.',
+        tags: ['philosophy', 'wisdom']
+      },
+      figure: {
+        id: 3,
+        firstName: 'Socrates',
+        lastName: ''
+      }
+    });
+    (api.deleteQuote as jest.Mock).mockResolvedValue({
+      message: 'Quote deleted successfully',
+      id: 1
+    });
   });
 
   afterEach(() => {
     jest.clearAllMocks();
   });
 
-  test('renders ALL tag button and search bar', async () => {
+  test('renders ALL tag button, search bar, and add quote plus button', async () => {
     await act(async () => {
       render(<App />);
     });
     expect(screen.getByText(/ALL/i)).toBeInTheDocument();
     expect(screen.getByPlaceholderText(/search quotes, figures, or topics/i)).toBeInTheDocument();
+    expect(screen.getByTitle(/add quote/i)).toBeInTheDocument();
   });
 
   test('tapping a topic tag prepopulates the search bar and toggling it clears it', async () => {
@@ -120,5 +138,88 @@ describe('App unified filtering', () => {
 
     fireEvent.click(braveWord);
     expect(searchInput.value).toBe('');
+  });
+
+  test('clicking the plus button opens the add quote modal and submits a new quote', async () => {
+    await act(async () => {
+      render(<App />);
+    });
+
+    const addBtn = screen.getByTitle(/add quote/i);
+    fireEvent.click(addBtn);
+
+    const dialog = screen.getByRole('dialog');
+    expect(dialog).toBeInTheDocument();
+    expect(screen.getByText(/add new quote/i)).toBeInTheDocument();
+
+    const quoteInput = screen.getByPlaceholderText(/enter timeless words or insight/i);
+    const authorInput = screen.getByPlaceholderText(/e\.g\. Marcus Aurelius/i);
+    const tagsInput = screen.getByPlaceholderText(/e\.g\. wisdom, stoicism, life/i);
+
+    fireEvent.change(quoteInput, { target: { value: 'Know thyself.' } });
+    fireEvent.change(authorInput, { target: { value: 'Socrates' } });
+    fireEvent.change(tagsInput, { target: { value: 'philosophy, wisdom' } });
+
+    await act(async () => {
+      const submitBtn = within(dialog).getByRole('button', { name: /add quote/i });
+      fireEvent.click(submitBtn);
+    });
+
+    expect(api.createQuote).toHaveBeenCalledWith({
+      text: 'Know thyself.',
+      author: 'Socrates',
+      tags: 'philosophy, wisdom'
+    });
+
+    await waitFor(() => {
+      expect(screen.getByText('Know')).toBeInTheDocument();
+      expect(screen.getByText('thyself')).toBeInTheDocument();
+      expect(screen.getByText('Socrates')).toBeInTheDocument();
+    });
+  });
+
+  test('clicking subtle delete button displays confirmation prompt and cancel dismisses it', async () => {
+    await act(async () => {
+      render(<App />);
+    });
+
+    const deleteBtns = screen.getAllByTitle(/delete quote/i);
+    expect(deleteBtns.length).toBe(2);
+
+    // Click delete on the first quote
+    fireEvent.click(deleteBtns[0]);
+
+    expect(screen.getByText('Delete?')).toBeInTheDocument();
+    const cancelBtn = screen.getByRole('button', { name: /cancel delete quote/i });
+    const confirmBtn = screen.getByRole('button', { name: /confirm delete quote/i });
+    expect(cancelBtn).toBeInTheDocument();
+    expect(confirmBtn).toBeInTheDocument();
+
+    // Cancel deletion
+    fireEvent.click(cancelBtn);
+    expect(screen.queryByText('Delete?')).not.toBeInTheDocument();
+    expect(api.deleteQuote).not.toHaveBeenCalled();
+    expect(screen.getByText('brave')).toBeInTheDocument();
+  });
+
+  test('confirming delete calls deleteQuote and removes the quote from list', async () => {
+    await act(async () => {
+      render(<App />);
+    });
+
+    const deleteBtns = screen.getAllByTitle(/delete quote/i);
+    fireEvent.click(deleteBtns[0]);
+
+    const confirmBtn = screen.getByRole('button', { name: /confirm delete quote/i });
+    await act(async () => {
+      fireEvent.click(confirmBtn);
+    });
+
+    expect(api.deleteQuote).toHaveBeenCalledWith(1);
+    await waitFor(() => {
+      expect(screen.queryByText('brave')).not.toBeInTheDocument();
+    });
+    // Second quote remains
+    expect(screen.getByText('Resist')).toBeInTheDocument();
   });
 });

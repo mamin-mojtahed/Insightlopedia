@@ -1,4 +1,5 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState, useRef, useEffect } from 'react';
+import { Trash2 } from 'lucide-react';
 import { Quote, Figure } from '../types';
 import { tokenizeQuote } from '../utils/textUtils';
 
@@ -10,6 +11,7 @@ interface QuoteCardProps {
   activeWord?: string | null;
   onSelectWord?: (word: string) => void;
   onSelectFigure?: (figureName: string) => void;
+  onDeleteQuote?: (id: number) => Promise<void> | void;
 }
 
 export const QuoteCard: React.FC<QuoteCardProps> = ({
@@ -19,8 +21,47 @@ export const QuoteCard: React.FC<QuoteCardProps> = ({
   onSelectTag,
   activeWord,
   onSelectWord,
-  onSelectFigure
+  onSelectFigure,
+  onDeleteQuote
 }) => {
+  const [isConfirming, setIsConfirming] = useState<boolean>(false);
+  const [isDeleting, setIsDeleting] = useState<boolean>(false);
+  const actionsRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!isConfirming) return;
+
+    const handleClickOutside = (e: MouseEvent) => {
+      if (actionsRef.current && !actionsRef.current.contains(e.target as Node)) {
+        setIsConfirming(false);
+      }
+    };
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setIsConfirming(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isConfirming]);
+
+  const handleConfirmDelete = async () => {
+    if (!onDeleteQuote) return;
+    try {
+      setIsDeleting(true);
+      await onDeleteQuote(quote.id);
+    } catch {
+      setIsDeleting(false);
+      setIsConfirming(false);
+    }
+  };
+
   const fullName = figure ? `${figure.firstName} ${figure.lastName}`.trim() : '';
 
   const tokens = useMemo(() => {
@@ -52,6 +93,45 @@ export const QuoteCard: React.FC<QuoteCardProps> = ({
           {fullName}
         </h3>
       )}
+
+      {onDeleteQuote && (
+        <div className="quote-actions" ref={actionsRef}>
+          {isConfirming ? (
+            <div className="quote-delete-confirm" role="group" aria-label="Confirm deletion">
+              <span className="confirm-prompt">Delete?</span>
+              <button
+                type="button"
+                className="confirm-btn yes"
+                onClick={handleConfirmDelete}
+                disabled={isDeleting}
+                aria-label="Confirm delete quote"
+              >
+                {isDeleting ? 'Deleting...' : 'Delete'}
+              </button>
+              <button
+                type="button"
+                className="confirm-btn cancel"
+                onClick={() => setIsConfirming(false)}
+                disabled={isDeleting}
+                aria-label="Cancel delete quote"
+              >
+                Cancel
+              </button>
+            </div>
+          ) : (
+            <button
+              type="button"
+              className="quote-delete-btn"
+              onClick={() => setIsConfirming(true)}
+              aria-label="Delete quote"
+              title="Delete quote"
+            >
+              <Trash2 size={15} strokeWidth={1.8} />
+            </button>
+          )}
+        </div>
+      )}
+
       <div className="quote">
         <p>
           <strong>

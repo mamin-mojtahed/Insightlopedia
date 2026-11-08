@@ -9,7 +9,9 @@
   ],
   "scripts": {
     "start": "concurrently -n \"API,APP\" -c \"blue,magenta\" \"npm start --workspace=backend\" \"npm start --workspace=app\"",
-    "dev": "concurrently -n \"API,APP\" -c \"blue,magenta\" \"npm run dev --workspace=backend\" \"npm run dev --workspace=app\""
+    "dev": "concurrently -n \"API,APP\" -c \"blue,magenta\" \"npm run dev --workspace=backend\" \"npm run dev --workspace=app\"",
+    "add-quote": "node backend/cli.js",
+    "delete-quote": "node backend/deleteQuote.js"
   },
   "devDependencies": {
     "concurrently": "^8.2.2"
